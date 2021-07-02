@@ -15,7 +15,7 @@ import (
 )
 
 type (
-	rsaClient struct {
+	RsaClient struct {
 		Client
 		appId          string
 		sunmiPublicKey *rsa.PublicKey
@@ -24,7 +24,7 @@ type (
 )
 
 // NewRsaClient return a client
-func NewRsaClient(appId, privateKey, sunmiPublicKey string) (Client, error) {
+func NewRsaClient(appId, privateKey, sunmiPublicKey string) (*RsaClient, error) {
 	// parse privatekey
 	privBlock, _ := pem.Decode([]byte(privateKey))
 	if privBlock == nil {
@@ -47,7 +47,7 @@ func NewRsaClient(appId, privateKey, sunmiPublicKey string) (Client, error) {
 		return nil, PublicKeyErr
 	}
 	pub := pubInterface.(*rsa.PublicKey)
-	return &rsaClient{
+	return &RsaClient{
 		appId:          appId,
 		sunmiPublicKey: pub,
 		privateKey:     priv.(*rsa.PrivateKey),
@@ -55,7 +55,7 @@ func NewRsaClient(appId, privateKey, sunmiPublicKey string) (Client, error) {
 }
 
 // Request to sunmi
-func (c *rsaClient) Request(url string, params interface{}, headers map[string]string) ([]byte, error) {
+func (c *RsaClient) Request(url string, params interface{}, headers map[string]string) ([]byte, error) {
 	client := http_request.New()
 	req := client.Request
 	bodyByte, err := json.Marshal(params)
@@ -83,7 +83,7 @@ func (c *rsaClient) Request(url string, params interface{}, headers map[string]s
 }
 
 // SignRsa sign with rsa
-func (c *rsaClient) SignRsa(data string) (map[string]string, error) {
+func (c *RsaClient) SignRsa(data string) (map[string]string, error) {
 	timestamp, nonce := createTimestamp()
 	timestampStr := strconv.FormatInt(timestamp, 10)
 	hash := sha256.New()
@@ -101,7 +101,7 @@ func (c *rsaClient) SignRsa(data string) (map[string]string, error) {
 }
 
 // VerifySignRsa verify rsa
-func (c *rsaClient) VerifySignRsa(data, reqSign string) error {
+func (c *RsaClient) VerifySignRsa(data, reqSign string) error {
 	signByte, err := base64.StdEncoding.DecodeString(reqSign)
 	shaNew := sha256.New()
 	shaNew.Write([]byte(data))

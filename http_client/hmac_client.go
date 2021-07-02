@@ -11,7 +11,7 @@ import (
 )
 
 type (
-	hmacClient struct {
+	HmacClient struct {
 		Client
 		appId  string
 		appKey string
@@ -19,15 +19,15 @@ type (
 )
 
 // NewHmacClient return a client
-func NewHmacClient(appId, appKey string) Client {
-	return &hmacClient{
+func NewHmacClient(appId, appKey string) *HmacClient {
+	return &HmacClient{
 		appId:  appId,
 		appKey: appKey,
 	}
 }
 
 // Request
-func (c *hmacClient) Request(url string, params interface{}, headers map[string]string) ([]byte, error) {
+func (c *HmacClient) Request(url string, params interface{}, headers map[string]string) ([]byte, error) {
 	client := http_request.New()
 	req := client.Request
 	if params == nil {
@@ -37,7 +37,7 @@ func (c *hmacClient) Request(url string, params interface{}, headers map[string]
 	if err != nil {
 		return nil, err
 	}
-	signHeader, err := c.signHmac(c.appId, string(bodyByte))
+	signHeader, err := c.SignHmac(c.appId, string(bodyByte))
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (c *hmacClient) Request(url string, params interface{}, headers map[string]
 	}
 	respBody := response.Body()
 	responseHeader := response.Header()
-	err = c.verifyHmac(string(respBody)+responseHeader.Get("Sunmi-Appid")+responseHeader.Get("Sunmi-Timestamp")+responseHeader.Get("Sunmi-Nonce"), responseHeader.Get("Sunmi-Sign"))
+	err = c.VerifyHmac(string(respBody)+responseHeader.Get("Sunmi-Appid")+responseHeader.Get("Sunmi-Timestamp")+responseHeader.Get("Sunmi-Nonce"), responseHeader.Get("Sunmi-Sign"))
 	if err != nil {
 		return respBody, err
 	}
@@ -61,7 +61,7 @@ func (c *hmacClient) Request(url string, params interface{}, headers map[string]
 }
 
 // signHmac sign with hmac
-func (c *hmacClient) signHmac(appId, data string) (map[string]string, error) {
+func (c *HmacClient) SignHmac(appId, data string) (map[string]string, error) {
 	timestamp, nonce := createTimestamp()
 	timestampStr := strconv.FormatInt(timestamp, 10)
 	hash := hmac.New(sha256.New, []byte(c.appKey)[:])
@@ -75,7 +75,7 @@ func (c *hmacClient) signHmac(appId, data string) (map[string]string, error) {
 }
 
 // verifyHmac verify hmac
-func (c *hmacClient) verifyHmac(data, reqSign string) error {
+func (c *HmacClient) VerifyHmac(data, reqSign string) error {
 	hashObj := hmac.New(sha256.New, []byte(c.appKey)[:])
 	hashObj.Write([]byte(data))
 	sign := hex.EncodeToString([]byte(hashObj.Sum(nil)))
